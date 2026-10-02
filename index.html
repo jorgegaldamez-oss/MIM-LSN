@@ -39,7 +39,7 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-extrabold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">Muestra Oficial</span>
-            <span class="text-xs text-slate-400 font-medium">Capacidad: 80 personas/bloque</span>
+            <span class="text-xs text-slate-400 font-medium">Tope: 80 personas/bloque</span>
           </div>
           <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-tight">Museo Interactivo Mirador (MIM)</h1>
           <p class="text-xs text-slate-500">Agendamiento de Delegaciones Escolares</p>
@@ -47,13 +47,13 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <button type="button" onclick="abrirModalWebhook()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors" title="Google Sheets Conectado">
-          <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Google Sheets Conectado</span>
+        <button type="button" onclick="cargarReservasDesdeServidor()" id="btnSync" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-colors" title="Actualizar datos desde Google Sheets">
+          <svg id="iconoSync" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span id="textoEstadoSync">Sincronizado</span>
         </button>
         <button type="button" onclick="abrirModalDelegaciones()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors shadow-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-          <span>Ver Reservas</span>
+          <span>Mis Registros</span>
           <span id="contadorReservasBadge" class="bg-indigo-600 text-white px-1.5 py-0.2 rounded-full text-[10px]">0</span>
         </button>
       </div>
@@ -76,25 +76,19 @@
           <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">80 cupos máx/hora</span>
         </div>
 
-        <!-- Pestañas de semanas -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" id="contenedorSemanas">
-          <!-- Generado por JS -->
-        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" id="contenedorSemanas"></div>
 
-        <!-- Selector horizontal de días -->
         <div class="overflow-x-auto pb-2 custom-scrollbar">
-          <div class="flex gap-2.5 min-w-max" id="contenedorDias">
-            <!-- Días generados por JS -->
-          </div>
+          <div class="flex gap-2.5 min-w-max" id="contenedorDias"></div>
         </div>
       </div>
 
-      <!-- GRILLA DE BLOQUES HORARIOS (09 a 18h, colación 13-14h) -->
+      <!-- GRILLA DE BLOQUES HORARIOS -->
       <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 class="text-sm font-bold text-slate-800" id="tituloFechaSeleccionada">Cargando horario...</h3>
-            <p class="text-xs text-slate-500">Haz clic en un bloque para reservar (colación 13:00 - 14:00 hrs cerrada)</p>
+            <p class="text-xs text-slate-500">Haz clic en un bloque para reservar (colación 13:00 - 14:00 hrs cerrada)[cite: 1]</p>
           </div>
           <div class="flex items-center gap-2 text-xs">
             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> >30 libres</span>
@@ -103,9 +97,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="grillaHorarios">
-          <!-- Bloques horarios generados por JS -->
-        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="grillaHorarios"></div>
       </div>
     </div>
 
@@ -116,7 +108,7 @@
         <div class="border-b border-slate-100 pb-4 mb-5">
           <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Paso 2</span>
           <h2 class="text-lg font-bold text-slate-900 mt-1">Inscribir Delegación</h2>
-          <p class="text-xs text-slate-500">El total de asistentes se descontará en tiempo real de los 80 cupos.</p>
+          <p class="text-xs text-slate-500">Cupos sincronizados directamente con la base de datos central.</p>
         </div>
 
         <!-- RESUMEN DEL BLOQUE SELECCIONADO -->
@@ -159,7 +151,7 @@
             </div>
           </div>
 
-          <!-- CONTADORES DE ESTUDIANTES Y DOCENTES ACOMPAÑANTES -->
+          <!-- CONTADORES DE ASISTENTES -->
           <div class="grid grid-cols-2 gap-3 pt-1">
             <div>
               <div class="flex justify-between items-center mb-1">
@@ -186,7 +178,7 @@
             </div>
           </div>
 
-          <!-- RESUMEN DINÁMICO DE TOTAL DE PERSONAS A DESCONTAR -->
+          <!-- RESUMEN DINÁMICO -->
           <div class="rounded-xl p-3 bg-indigo-50/70 border border-indigo-100 flex items-center justify-between text-xs">
             <div class="text-slate-600">
               <span id="txtCalculoDesglose">40 est. + 1 doc. =</span>
@@ -197,7 +189,6 @@
             </div>
           </div>
 
-          <!-- AVISO DE ERROR SI EXCEDE EL CUPO -->
           <div id="alertaCupoExcedido" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
             <svg class="w-4 h-4 shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <span id="txtAlertaError">El total de personas excede los cupos disponibles en este bloque.</span>
@@ -222,7 +213,6 @@
   <!-- MODAL: TICKET DE RESERVA CONFIRMADA -->
   <div id="modalTicket" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200">
-      
       <div class="text-center pb-4 border-b border-dashed border-slate-200">
         <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -269,29 +259,26 @@
           <span>Imprimir Ticket</span>
         </button>
         <button type="button" onclick="cerrarModalTicket()" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors">
-          Entendido / Cerrar
+          Cerrar
         </button>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL: LISTADO AUDITORÍA DE RESERVAS -->
+  <!-- MODAL: MIS REGISTROS -->
   <div id="modalDelegaciones" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
         <div>
-          <h3 class="text-base font-bold text-slate-900">Reservas Registradas</h3>
-          <p class="text-xs text-slate-500">Historial de delegaciones inscritas en este navegador</p>
+          <h3 class="text-base font-bold text-slate-900">Mis Registros de Reserva</h3>
+          <p class="text-xs text-slate-500">Historial de solicitudes realizadas desde este navegador</p>
         </div>
         <button type="button" onclick="cerrarModalDelegaciones()" class="text-slate-400 hover:text-slate-600 p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <div class="overflow-y-auto flex-1 custom-scrollbar pr-1" id="listaReservasContainer">
-        <!-- Renderizado dinámico -->
-      </div>
+      <div class="overflow-y-auto flex-1 custom-scrollbar pr-1" id="listaReservasContainer"></div>
 
       <div class="border-t border-slate-100 pt-3 mt-4 text-right">
         <button type="button" onclick="cerrarModalDelegaciones()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors">Cerrar</button>
@@ -299,61 +286,33 @@
     </div>
   </div>
 
-  <!-- MODAL: CONFIGURAR URL WEBHOOK GOOGLE APPS SCRIPT -->
-  <div id="modalWebhook" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
-      <h3 class="text-base font-bold text-slate-900 mb-1">Configuración Google Apps Script</h3>
-      <p class="text-xs text-slate-500 mb-4">Endpoint activo para despachar a Google Sheets y correos.</p>
-      
-      <div class="space-y-3">
-        <input type="url" id="inputWebhookUrl" class="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://script.google.com/macros/s/.../exec">
-        <p class="text-[11px] text-slate-400 leading-relaxed">
-          Las reservas enviadas despachan un JSON con institución, responsable, correo, fecha, hora, estudiantes, acompañantes y total general.
-        </p>
-      </div>
-
-      <div class="mt-5 flex justify-end gap-2">
-        <button type="button" onclick="cerrarModalWebhook()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancelar</button>
-        <button type="button" onclick="guardarWebhookUrl()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">Guardar Cambios</button>
-      </div>
-    </div>
-  </div>
-
   <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
     <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
-      Muestra Itinerante MIM &bull; Capacidad Máxima: 80 personas por bloque horario &bull; Cierre de colación de 13:00 a 14:00 hrs.
+      Muestra Itinerante MIM &bull; Capacidad Máxima: 80 personas por bloque horario &bull; Cierre de colación de 13:00 a 14:00 hrs[cite: 1].
     </div>
   </footer>
 
   <script>
-    // -------------------------------------------------------------
-    // 1. CONFIGURACIÓN Y CALENDARIO OFICIAL MIM (SEGÚN CRONOGRAMA)
-    // -------------------------------------------------------------
     const CAPACIDAD_MAXIMA_POR_HORA = 80;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe7U34Mdg_TAMqW46AvqcK70--WHovE8KWV1dk7Xkr_chJPy8lrOcq_C_dsw0pkHqS-w/exec";
 
-    // URL oficial de Google Apps Script
-    const WEBHOOK_DEFAULT = "https://script.google.com/macros/s/AKfycbwe7U34Mdg_TAMqW46AvqcK70--WHovE8KWV1dk7Xkr_chJPy8lrOcq_C_dsw0pkHqS-w/exec";
-    let SCRIPT_URL = localStorage.getItem("MIM_APPS_SCRIPT_URL") || WEBHOOK_DEFAULT;
-
-    // Bloques horarios oficiales de 09:00 a 18:00 (Omite 13:00 a 14:00 por colación)
     const BLOQUES_HORARIOS = [
       { id: "09:00", label: "09:00 - 10:00" },
       { id: "10:00", label: "10:00 - 11:00" },
       { id: "11:00", label: "11:00 - 12:00" },
       { id: "12:00", label: "12:00 - 13:00" },
-      // 13:00 a 14:00 PAUSA COLACIÓN
+      // 13:00 a 14:00 Pausa colación[cite: 1]
       { id: "14:00", label: "14:00 - 15:00" },
       { id: "15:00", label: "15:00 - 16:00" },
       { id: "16:00", label: "16:00 - 17:00" },
       { id: "17:00", label: "17:00 - 18:00" }
     ];
 
-    // Semanas oficiales de funcionamiento
     const SEMANAS_MIM = [
       {
         id: "sem1",
         nombre: "Semana 1",
-        rango: "14 al 18 Octubre",
+        rango: "14 al 18 Octubre", //[cite: 1]
         dias: [
           { fecha: "2026-10-14", diaSem: "Mié", diaNum: "14", mes: "Oct" },
           { fecha: "2026-10-15", diaSem: "Jue", diaNum: "15", mes: "Oct" },
@@ -365,7 +324,7 @@
       {
         id: "sem2",
         nombre: "Semana 2",
-        rango: "21 al 25 Octubre",
+        rango: "21 al 25 Octubre", //[cite: 1]
         dias: [
           { fecha: "2026-10-21", diaSem: "Mié", diaNum: "21", mes: "Oct" },
           { fecha: "2026-10-22", diaSem: "Jue", diaNum: "22", mes: "Oct" },
@@ -377,7 +336,7 @@
       {
         id: "sem3",
         nombre: "Semana 3",
-        rango: "27 al 31 Octubre",
+        rango: "27 al 31 Octubre", //[cite: 1]
         dias: [
           { fecha: "2026-10-27", diaSem: "Mar", diaNum: "27", mes: "Oct" },
           { fecha: "2026-10-28", diaSem: "Mié", diaNum: "28", mes: "Oct" },
@@ -389,7 +348,7 @@
       {
         id: "sem4",
         nombre: "Semana 4",
-        rango: "03 al 07 Noviembre",
+        rango: "03 al 07 Noviembre", //[cite: 1]
         dias: [
           { fecha: "2026-11-03", diaSem: "Mar", diaNum: "03", mes: "Nov" },
           { fecha: "2026-11-04", diaSem: "Mié", diaNum: "04", mes: "Nov" },
@@ -400,33 +359,64 @@
       }
     ];
 
-    // -------------------------------------------------------------
-    // 2. ESTADO DE LA APLICACIÓN
-    // -------------------------------------------------------------
     let semanaSeleccionadaIndex = 0;
     let fechaSeleccionada = SEMANAS_MIM[0].dias[0].fecha;
     let horaSeleccionada = BLOQUES_HORARIOS[0].label;
 
-    // Cargar reservas desde localStorage
-    let reservas = JSON.parse(localStorage.getItem("MIM_RESERVAS")) || [];
+    // Todas las reservas globales (recuperadas de Google Sheets)
+    let reservasGlobales = [];
+    // Mis reservas realizadas en este navegador
+    let misCodigosLocales = JSON.parse(localStorage.getItem("MIM_MIS_CODIGOS")) || [];
 
-    // -------------------------------------------------------------
-    // 3. INICIALIZACIÓN
-    // -------------------------------------------------------------
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("inputWebhookUrl").value = SCRIPT_URL;
       renderizarSemanas();
       renderizarDias();
       renderizarHorarios();
       actualizarCalculoTotal();
       actualizarBadgeReservas();
+      cargarReservasDesdeServidor();
+
+      // Sincronización automática periódica cada 45 segundos
+      setInterval(cargarReservasDesdeServidor, 45000);
     });
 
     // -------------------------------------------------------------
-    // 4. LÓGICA DE CUPOS
+    // CONSULTA EN TIEMPO REAL A GOOGLE APPS SCRIPT (GET)
+    // -------------------------------------------------------------
+    async function cargarReservasDesdeServidor() {
+      const icono = document.getElementById("iconoSync");
+      const txtEstado = document.getElementById("textoEstadoSync");
+
+      icono.classList.add("animate-spin");
+      txtEstado.textContent = "Consultando...";
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL);
+        const data = await respuesta.json();
+
+        if (data && data.status === "success" && Array.isArray(data.data)) {
+          reservasGlobales = data.data;
+          txtEstado.textContent = "En línea";
+        } else {
+          txtEstado.textContent = "Error sync";
+        }
+      } catch (err) {
+        console.warn("No se pudo sincronizar con Google Sheets:", err);
+        txtEstado.textContent = "Offline";
+      } finally {
+        icono.classList.remove("animate-spin");
+        renderizarDias();
+        renderizarHorarios();
+        actualizarCalculoTotal();
+        actualizarBadgeReservas();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // CÁLCULO DE CUPOS GLOBALES
     // -------------------------------------------------------------
     function obtenerPersonasOcupadas(fecha, hora) {
-      return reservas
+      return reservasGlobales
         .filter(r => r.fecha === fecha && r.hora === hora)
         .reduce((sum, r) => sum + (parseInt(r.total_asistentes || r.estudiantes) || 0), 0);
     }
@@ -445,7 +435,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. RENDERIZADO VISUAL
+    // RENDERIZADO VISUAL
     // -------------------------------------------------------------
     function renderizarSemanas() {
       const cont = document.getElementById("contenedorSemanas");
@@ -562,14 +552,13 @@
             <div class="${barraColor} h-full transition-all" style="width: ${pctOcupado}%"></div>
           </div>
           <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-            <span>Inscritos: <strong class="text-slate-700">${ocupados}</strong>/${CAPACIDAD_MAXIMA_POR_HORA}</span>
-            <span class="text-indigo-600 font-bold">${libres} cupos</span>
+            <span>Ocupados: <strong class="text-slate-700">${ocupados}</strong>/${CAPACIDAD_MAXIMA_POR_HORA}</span>
+            <span class="text-indigo-600 font-bold">${libres} libres</span>
           </div>
         `;
         cont.appendChild(div);
       });
 
-      // Actualizar resumen en formulario
       document.getElementById("txtResumenFecha").textContent = fechaTexto;
       document.getElementById("txtResumenHora").textContent = `${horaSeleccionada} hrs`;
       const cuposDisponiblesActual = obtenerCuposLibres(fechaSeleccionada, horaSeleccionada);
@@ -577,9 +566,6 @@
       document.getElementById("labelMaxEstudiantes").textContent = `Máx: ${cuposDisponiblesActual}`;
     }
 
-    // -------------------------------------------------------------
-    // 6. CÁLCULO Y VALIDACIÓN DE ASISTENTES
-    // -------------------------------------------------------------
     function ajustarContador(inputId, delta) {
       const input = document.getElementById(inputId);
       let val = parseInt(input.value) || 0;
@@ -603,12 +589,12 @@
       if (totalAsistentes > cuposLibres) {
         alerta.classList.remove("hidden");
         document.getElementById("txtAlertaError").textContent = 
-          `No es posible inscribir ${totalAsistentes} personas (estudiantes + docentes). Solo quedan ${cuposLibres} cupos libres en este bloque.`;
+          `No es posible inscribir ${totalAsistentes} personas. Solo quedan ${cuposLibres} cupos en este horario según la base de datos central.`;
         btn.disabled = true;
         btn.classList.add("opacity-50", "cursor-not-allowed");
       } else if (totalAsistentes <= 0) {
         alerta.classList.remove("hidden");
-        document.getElementById("txtAlertaError").textContent = "Debe registrar al menos 1 estudiante y 1 docente.";
+        document.getElementById("txtAlertaError").textContent = "Debe registrar al menos 1 estudiante y 1 acompañante.";
         btn.disabled = true;
         btn.classList.add("opacity-50", "cursor-not-allowed");
       } else {
@@ -619,7 +605,7 @@
     }
 
     // -------------------------------------------------------------
-    // 7. ENVÍO DE RESERVA Y DISPARO A GOOGLE APPS SCRIPT
+    // ENVÍO DE RESERVA
     // -------------------------------------------------------------
     async function procesarReserva(e) {
       e.preventDefault();
@@ -630,7 +616,7 @@
       const cuposLibres = obtenerCuposLibres(fechaSeleccionada, horaSeleccionada);
 
       if (totalAsistentes > cuposLibres) {
-        alert("La cantidad de personas solicitada supera los cupos disponibles.");
+        alert("La disponibilidad cambió o no hay cupos suficientes. Por favor actualiza.");
         return;
       }
 
@@ -650,20 +636,19 @@
         timestamp: new Date().toISOString()
       };
 
-      // 1. Descuento de cupos y guardado local
-      reservas.push(nuevaReserva);
-      localStorage.setItem("MIM_RESERVAS", JSON.stringify(reservas));
+      // Descuento provisional inmediato en la interfaz
+      reservasGlobales.push(nuevaReserva);
+      misCodigosLocales.push(codigoReserva);
+      localStorage.setItem("MIM_MIS_CODIGOS", JSON.stringify(misCodigosLocales));
 
-      // 2. Feedback en botón
       const btn = document.getElementById("btnConfirmarReserva");
       const textoOriginal = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = `
         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <span>Despachando a Google Sheets...</span>
+        <span>Guardando en Google Sheets...</span>
       `;
 
-      // 3. Envío tolerante a Apps Script (con timeout seguro)
       try {
         const envioFetch = fetch(SCRIPT_URL, {
           method: "POST",
@@ -672,13 +657,12 @@
           body: JSON.stringify(nuevaReserva)
         });
 
-        const temporizador = new Promise((resolve) => setTimeout(resolve, 2500));
-        await Promise.race([envioFetch, temporizador]);
+        // Espera máxima de 2.5 seg
+        await Promise.race([envioFetch, new Promise(res => setTimeout(res, 2500))]);
       } catch (err) {
-        console.warn("Aviso de red al enviar a Apps Script:", err);
+        console.warn("Aviso de red:", err);
       }
 
-      // 4. Restauración de UI y apertura de ticket
       btn.innerHTML = textoOriginal;
       btn.disabled = false;
 
@@ -689,16 +673,15 @@
 
       mostrarTicket(nuevaReserva);
 
-      // Limpiar formulario
+      // Re-sincronizar con la hoja en segundo plano
+      setTimeout(cargarReservasDesdeServidor, 3000);
+
       document.getElementById("formularioReserva").reset();
       document.getElementById("campoEstudiantes").value = 40;
       document.getElementById("campoDocentes").value = 1;
       actualizarCalculoTotal();
     }
 
-    // -------------------------------------------------------------
-    // 8. TICKET DIGITAL Y GESTIÓN
-    // -------------------------------------------------------------
     function mostrarTicket(reserva) {
       document.getElementById("ticketCodigo").textContent = reserva.codigo;
       document.getElementById("ticketInstitucion").textContent = reserva.institucion;
@@ -719,15 +702,16 @@
       const cont = document.getElementById("listaReservasContainer");
       cont.innerHTML = "";
 
-      if (reservas.length === 0) {
+      const misReservas = reservasGlobales.filter(r => misCodigosLocales.includes(r.codigo));
+
+      if (misReservas.length === 0) {
         cont.innerHTML = `
           <div class="text-center py-10 text-slate-400 text-xs">
-            No hay reservas registradas en este navegador todavía.
+            No has generado reservas desde este navegador aún.
           </div>
         `;
       } else {
-        reservas.slice().reverse().forEach((r, idxOriginal) => {
-          const indexReal = reservas.length - 1 - idxOriginal;
+        misReservas.slice().reverse().forEach((r) => {
           const card = document.createElement("div");
           card.className = "p-3.5 rounded-xl border border-slate-200 mb-2.5 bg-slate-50 flex items-center justify-between text-xs";
           card.innerHTML = `
@@ -741,9 +725,6 @@
               </p>
               <p class="text-slate-400 text-[10px]">Encargado: ${r.nombre} (${r.correo})</p>
             </div>
-            <button type="button" onclick="anularReserva(${indexReal})" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded-lg hover:bg-rose-50 transition-colors text-[11px]">
-              Anular
-            </button>
           `;
           cont.appendChild(card);
         });
@@ -756,36 +737,9 @@
       document.getElementById("modalDelegaciones").classList.add("hidden");
     }
 
-    function anularReserva(index) {
-      if (confirm("¿Estás seguro de anular esta delegación? Se restituirán los cupos.")) {
-        reservas.splice(index, 1);
-        localStorage.setItem("MIM_RESERVAS", JSON.stringify(reservas));
-        renderizarDias();
-        renderizarHorarios();
-        actualizarCalculoTotal();
-        actualizarBadgeReservas();
-        abrirModalDelegaciones();
-      }
-    }
-
     function actualizarBadgeReservas() {
-      document.getElementById("contadorReservasBadge").textContent = reservas.length;
-    }
-
-    // Modal Webhook
-    function abrirModalWebhook() {
-      document.getElementById("modalWebhook").classList.remove("hidden");
-    }
-    function cerrarModalWebhook() {
-      document.getElementById("modalWebhook").classList.add("hidden");
-    }
-    function guardarWebhookUrl() {
-      const nuevaUrl = document.getElementById("inputWebhookUrl").value.trim();
-      if (nuevaUrl) {
-        SCRIPT_URL = nuevaUrl;
-        localStorage.setItem("MIM_APPS_SCRIPT_URL", SCRIPT_URL);
-      }
-      cerrarModalWebhook();
+      const misReservas = reservasGlobales.filter(r => misCodigosLocales.includes(r.codigo));
+      document.getElementById("contadorReservasBadge").textContent = misReservas.length;
     }
   </script>
 </body>
