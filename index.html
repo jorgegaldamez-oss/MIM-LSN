@@ -377,7 +377,7 @@
       cargarReservasDesdeServidor();
 
       // Sincronización automática periódica cada 45 segundos
-      setInterval(cargarReservasDesdeServidor, 45000);
+      setInterval(cargarReservasDesdeServidor, 25000);
     });
 
     // -------------------------------------------------------------
@@ -398,6 +398,7 @@
         const urlConCacheBuster = SCRIPT_URL + "?t=" + new Date().getTime();
         const respuesta = await fetch(urlConCacheBuster, {
           method: "GET",
+          redirect: "follow"
           headers: { "Accept": "application/json" }
         });
         
