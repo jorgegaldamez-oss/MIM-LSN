@@ -367,16 +367,16 @@
     let misCodigosLocales = JSON.parse(localStorage.getItem("MIM_MIS_CODIGOS")) || [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      // 1. Render inicial inmediato con los datos locales
+      // 1. Dibuja la interfaz visual de inmediato
       renderizarTodo();
       actualizarCalculoTotal();
       actualizarBadgeReservas();
 
-      // 2. Cargar datos remotos desde Google Sheets
+      // 2. Trae las reservas de Google Sheets
       cargarReservasDesdeServidor();
 
-      // 3. Polling automático cada 30 segundos
-      setInterval(cargarReservasDesdeServidor, 30000);
+      // 3. Consulta periódica cada 20 segundos para actualización en tiempo real
+      setInterval(cargarReservasDesdeServidor, 20000);
     });
 
     function renderizarTodo() {
@@ -401,22 +401,20 @@
 
       try {
         const urlConCacheBuster = SCRIPT_URL + "?t=" + Date.now();
-        const respuesta = await fetch(urlConCacheBuster, {
-          method: "GET",
-          headers: { "Accept": "application/json" }
-        });
-        
+        const respuesta = await fetch(urlConCacheBuster);
         const data = await respuesta.json();
 
         if (data && data.status === "success" && Array.isArray(data.data)) {
           reservasGlobales = data.data;
+          console.log(`Sincronización exitosa: ${reservasGlobales.length} reservas registradas en Sheets.`);
           if (txtEstado) txtEstado.textContent = "En línea";
         } else {
-          if (txtEstado) txtEstado.textContent = "Error al leer";
+          console.warn("Respuesta inesperada de Apps Script:", data);
+          if (txtEstado) txtEstado.textContent = "Error de datos";
         }
       } catch (err) {
-        console.warn("Aviso de sincronización:", err);
-        if (txtEstado) txtEstado.textContent = "Sincronizado";
+        console.error("Fallo de red al consultar Google Sheets:", err);
+        if (txtEstado) txtEstado.textContent = "Desconectado";
       } finally {
         if (icono) icono.classList.remove("animate-spin");
         renderizarTodo();
@@ -431,15 +429,19 @@
     function normalizarFecha(str) {
       if (!str) return "";
       str = String(str).trim();
-      // Extrae YYYY-MM-DD incluso si viene con timestamp T00:00:00 o espacios
       const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
       if (match) return `${match[1]}-${match[2]}-${match[3]}`;
       return str.toLowerCase().replace(/\s+/g, "");
     }
 
+    // Normaliza eliminando espacios y unificando guiones en-dash (–) y normales (-)
     function normalizarHora(str) {
       if (!str) return "";
-      return String(str).toLowerCase().replace(/\s+/g, "").trim();
+      return String(str)
+        .toLowerCase()
+        .replace(/[\s\u2013\u2014]/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
     }
 
     function obtenerPersonasOcupadas(fecha, hora) {
@@ -714,7 +716,7 @@
 
       mostrarTicket(nuevaReserva);
 
-      setTimeout(cargarReservasDesdeServidor, 3000);
+      setTimeout(cargarReservasDesdeServidor, 2500);
 
       document.getElementById("formularioReserva").reset();
       document.getElementById("campoEstudiantes").value = 40;
