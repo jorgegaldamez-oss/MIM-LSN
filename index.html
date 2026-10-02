@@ -383,6 +383,9 @@
     // -------------------------------------------------------------
     // CONSULTA EN TIEMPO REAL A GOOGLE APPS SCRIPT (GET)
     // -------------------------------------------------------------
+   // -------------------------------------------------------------
+    // CONSULTA EN TIEMPO REAL (GET) CON MANEJO DE RED
+    // -------------------------------------------------------------
     async function cargarReservasDesdeServidor() {
       const icono = document.getElementById("iconoSync");
       const txtEstado = document.getElementById("textoEstadoSync");
@@ -391,17 +394,23 @@
       txtEstado.textContent = "Consultando...";
 
       try {
-        const respuesta = await fetch(SCRIPT_URL);
+        // Añadimos timestamp para evitar que el navegador guarde en caché respuestas viejas
+        const urlConCacheBuster = SCRIPT_URL + "?t=" + new Date().getTime();
+        const respuesta = await fetch(urlConCacheBuster, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        
         const data = await respuesta.json();
 
         if (data && data.status === "success" && Array.isArray(data.data)) {
           reservasGlobales = data.data;
           txtEstado.textContent = "En línea";
         } else {
-          txtEstado.textContent = "Error sync";
+          txtEstado.textContent = "Error al leer";
         }
       } catch (err) {
-        console.warn("No se pudo sincronizar con Google Sheets:", err);
+        console.error("Error al sincronizar con Apps Script:", err);
         txtEstado.textContent = "Offline";
       } finally {
         icono.classList.remove("animate-spin");
@@ -413,11 +422,18 @@
     }
 
     // -------------------------------------------------------------
-    // CÁLCULO DE CUPOS GLOBALES
+    // CÁLCULO DE CUPOS GLOBALES (NORMALIZADO)
     // -------------------------------------------------------------
+    function normalizarTexto(txt) {
+      return String(txt || "").toLowerCase().replace(/\s+/g, "").trim();
+    }
+
     function obtenerPersonasOcupadas(fecha, hora) {
+      const fNorm = normalizarTexto(fecha);
+      const hNorm = normalizarTexto(hora);
+
       return reservasGlobales
-        .filter(r => r.fecha === fecha && r.hora === hora)
+        .filter(r => normalizarTexto(r.fecha) === fNorm && normalizarTexto(r.hora) === hNorm)
         .reduce((sum, r) => sum + (parseInt(r.total_asistentes || r.estudiantes) || 0), 0);
     }
 
