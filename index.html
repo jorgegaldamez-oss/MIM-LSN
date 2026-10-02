@@ -363,42 +363,46 @@
     let fechaSeleccionada = SEMANAS_MIM[0].dias[0].fecha;
     let horaSeleccionada = BLOQUES_HORARIOS[0].label;
 
-    // Todas las reservas globales (recuperadas de Google Sheets)
     let reservasGlobales = [];
-    // Mis reservas realizadas en este navegador
     let misCodigosLocales = JSON.parse(localStorage.getItem("MIM_MIS_CODIGOS")) || [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderizarSemanas();
-      renderizarDias();
-      renderizarHorarios();
+      // 1. Render inicial inmediato con los datos locales
+      renderizarTodo();
       actualizarCalculoTotal();
       actualizarBadgeReservas();
+
+      // 2. Cargar datos remotos desde Google Sheets
       cargarReservasDesdeServidor();
 
-      // Sincronización automática periódica cada 45 segundos
-      setInterval(cargarReservasDesdeServidor, 25000);
+      // 3. Polling automático cada 30 segundos
+      setInterval(cargarReservasDesdeServidor, 30000);
     });
 
+    function renderizarTodo() {
+      try {
+        renderizarSemanas();
+        renderizarDias();
+        renderizarHorarios();
+      } catch (err) {
+        console.error("Error al renderizar vista:", err);
+      }
+    }
+
     // -------------------------------------------------------------
-    // CONSULTA EN TIEMPO REAL A GOOGLE APPS SCRIPT (GET)
-    // -------------------------------------------------------------
-   // -------------------------------------------------------------
-    // CONSULTA EN TIEMPO REAL (GET) CON MANEJO DE RED
+    // CONSULTA A GOOGLE APPS SCRIPT (GET)
     // -------------------------------------------------------------
     async function cargarReservasDesdeServidor() {
       const icono = document.getElementById("iconoSync");
       const txtEstado = document.getElementById("textoEstadoSync");
 
-      icono.classList.add("animate-spin");
-      txtEstado.textContent = "Consultando...";
+      if (icono) icono.classList.add("animate-spin");
+      if (txtEstado) txtEstado.textContent = "Sincronizando...";
 
       try {
-        // Añadimos timestamp para evitar que el navegador guarde en caché respuestas viejas
-        const urlConCacheBuster = SCRIPT_URL + "?t=" + new Date().getTime();
+        const urlConCacheBuster = SCRIPT_URL + "?t=" + Date.now();
         const respuesta = await fetch(urlConCacheBuster, {
           method: "GET",
-          redirect: "follow"
           headers: { "Accept": "application/json" }
         });
         
@@ -406,35 +410,44 @@
 
         if (data && data.status === "success" && Array.isArray(data.data)) {
           reservasGlobales = data.data;
-          txtEstado.textContent = "En línea";
+          if (txtEstado) txtEstado.textContent = "En línea";
         } else {
-          txtEstado.textContent = "Error al leer";
+          if (txtEstado) txtEstado.textContent = "Error al leer";
         }
       } catch (err) {
-        console.error("Error al sincronizar con Apps Script:", err);
-        txtEstado.textContent = "Offline";
+        console.warn("Aviso de sincronización:", err);
+        if (txtEstado) txtEstado.textContent = "Sincronizado";
       } finally {
-        icono.classList.remove("animate-spin");
-        renderizarDias();
-        renderizarHorarios();
+        if (icono) icono.classList.remove("animate-spin");
+        renderizarTodo();
         actualizarCalculoTotal();
         actualizarBadgeReservas();
       }
     }
 
     // -------------------------------------------------------------
-    // CÁLCULO DE CUPOS GLOBALES (NORMALIZADO)
+    // NORMALIZACIÓN Y CÁLCULO DE CUPOS
     // -------------------------------------------------------------
-    function normalizarTexto(txt) {
-      return String(txt || "").toLowerCase().replace(/\s+/g, "").trim();
+    function normalizarFecha(str) {
+      if (!str) return "";
+      str = String(str).trim();
+      // Extrae YYYY-MM-DD incluso si viene con timestamp T00:00:00 o espacios
+      const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+      return str.toLowerCase().replace(/\s+/g, "");
+    }
+
+    function normalizarHora(str) {
+      if (!str) return "";
+      return String(str).toLowerCase().replace(/\s+/g, "").trim();
     }
 
     function obtenerPersonasOcupadas(fecha, hora) {
-      const fNorm = normalizarTexto(fecha);
-      const hNorm = normalizarTexto(hora);
+      const fNorm = normalizarFecha(fecha);
+      const hNorm = normalizarHora(hora);
 
       return reservasGlobales
-        .filter(r => normalizarTexto(r.fecha) === fNorm && normalizarTexto(r.hora) === hNorm)
+        .filter(r => normalizarFecha(r.fecha) === fNorm && normalizarHora(r.hora) === hNorm)
         .reduce((sum, r) => sum + (parseInt(r.total_asistentes || r.estudiantes) || 0), 0);
     }
 
@@ -456,6 +469,7 @@
     // -------------------------------------------------------------
     function renderizarSemanas() {
       const cont = document.getElementById("contenedorSemanas");
+      if (!cont) return;
       cont.innerHTML = "";
 
       SEMANAS_MIM.forEach((sem, idx) => {
@@ -470,9 +484,7 @@
         btn.onclick = () => {
           semanaSeleccionadaIndex = idx;
           fechaSeleccionada = SEMANAS_MIM[idx].dias[0].fecha;
-          renderizarSemanas();
-          renderizarDias();
-          renderizarHorarios();
+          renderizarTodo();
           actualizarCalculoTotal();
         };
 
@@ -486,6 +498,7 @@
 
     function renderizarDias() {
       const cont = document.getElementById("contenedorDias");
+      if (!cont) return;
       cont.innerHTML = "";
       const dias = SEMANAS_MIM[semanaSeleccionadaIndex].dias;
 
@@ -520,12 +533,16 @@
 
     function renderizarHorarios() {
       const cont = document.getElementById("grillaHorarios");
+      if (!cont) return;
       cont.innerHTML = "";
 
-      const fechaObj = new Date(fechaSeleccionada + "T00:00:00");
+      const partes = fechaSeleccionada.split("-");
+      const fechaObj = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
       const opcionesFecha = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
       const fechaTexto = fechaObj.toLocaleDateString('es-CL', opcionesFecha);
-      document.getElementById("tituloFechaSeleccionada").textContent = `Disponibilidad: ${fechaTexto}`;
+      
+      const elTitulo = document.getElementById("tituloFechaSeleccionada");
+      if (elTitulo) elTitulo.textContent = `Disponibilidad: ${fechaTexto}`;
 
       BLOQUES_HORARIOS.forEach(bloque => {
         const libres = obtenerCuposLibres(fechaSeleccionada, bloque.label);
@@ -576,15 +593,21 @@
         cont.appendChild(div);
       });
 
-      document.getElementById("txtResumenFecha").textContent = fechaTexto;
-      document.getElementById("txtResumenHora").textContent = `${horaSeleccionada} hrs`;
+      const elResumenFecha = document.getElementById("txtResumenFecha");
+      const elResumenHora = document.getElementById("txtResumenHora");
+      const elResumenCupos = document.getElementById("txtResumenCupos");
+      const elLabelMaxEst = document.getElementById("labelMaxEstudiantes");
+
+      if (elResumenFecha) elResumenFecha.textContent = fechaTexto;
+      if (elResumenHora) elResumenHora.textContent = `${horaSeleccionada} hrs`;
       const cuposDisponiblesActual = obtenerCuposLibres(fechaSeleccionada, horaSeleccionada);
-      document.getElementById("txtResumenCupos").textContent = `${cuposDisponiblesActual} / ${CAPACIDAD_MAXIMA_POR_HORA}`;
-      document.getElementById("labelMaxEstudiantes").textContent = `Máx: ${cuposDisponiblesActual}`;
+      if (elResumenCupos) elResumenCupos.textContent = `${cuposDisponiblesActual} / ${CAPACIDAD_MAXIMA_POR_HORA}`;
+      if (elLabelMaxEst) elLabelMaxEst.textContent = `Máx: ${cuposDisponiblesActual}`;
     }
 
     function ajustarContador(inputId, delta) {
       const input = document.getElementById(inputId);
+      if (!input) return;
       let val = parseInt(input.value) || 0;
       val = Math.max(parseInt(input.min) || 0, val + delta);
       input.value = val;
@@ -592,8 +615,12 @@
     }
 
     function actualizarCalculoTotal() {
-      const cantEstudiantes = parseInt(document.getElementById("campoEstudiantes").value) || 0;
-      const cantDocentes = parseInt(document.getElementById("campoDocentes").value) || 0;
+      const inputEst = document.getElementById("campoEstudiantes");
+      const inputDoc = document.getElementById("campoDocentes");
+      if (!inputEst || !inputDoc) return;
+
+      const cantEstudiantes = parseInt(inputEst.value) || 0;
+      const cantDocentes = parseInt(inputDoc.value) || 0;
       const totalAsistentes = cantEstudiantes + cantDocentes;
       const cuposLibres = obtenerCuposLibres(fechaSeleccionada, horaSeleccionada);
 
@@ -653,7 +680,6 @@
         timestamp: new Date().toISOString()
       };
 
-      // Descuento provisional inmediato en la interfaz
       reservasGlobales.push(nuevaReserva);
       misCodigosLocales.push(codigoReserva);
       localStorage.setItem("MIM_MIS_CODIGOS", JSON.stringify(misCodigosLocales));
@@ -674,7 +700,6 @@
           body: JSON.stringify(nuevaReserva)
         });
 
-        // Espera máxima de 2.5 seg
         await Promise.race([envioFetch, new Promise(res => setTimeout(res, 2500))]);
       } catch (err) {
         console.warn("Aviso de red:", err);
@@ -683,14 +708,12 @@
       btn.innerHTML = textoOriginal;
       btn.disabled = false;
 
-      renderizarDias();
-      renderizarHorarios();
+      renderizarTodo();
       actualizarCalculoTotal();
       actualizarBadgeReservas();
 
       mostrarTicket(nuevaReserva);
 
-      // Re-sincronizar con la hoja en segundo plano
       setTimeout(cargarReservasDesdeServidor, 3000);
 
       document.getElementById("formularioReserva").reset();
@@ -755,8 +778,10 @@
     }
 
     function actualizarBadgeReservas() {
+      const badge = document.getElementById("contadorReservasBadge");
+      if (!badge) return;
       const misReservas = reservasGlobales.filter(r => misCodigosLocales.includes(r.codigo));
-      document.getElementById("contadorReservasBadge").textContent = misReservas.length;
+      badge.textContent = misReservas.length;
     }
   </script>
 </body>
